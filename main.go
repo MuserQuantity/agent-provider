@@ -35,6 +35,9 @@ func main() {
 	flag.StringVar(&cfg.apiKey, "api-key", os.Getenv("AGENT_PROVIDER_API_KEY"), "if set, require 'Authorization: Bearer <key>'")
 	flag.DurationVar(&cfg.timeout, "timeout", defTimeout, "max duration for a single CLI run")
 	flag.Parse()
+	if strings.EqualFold(cfg.proxy, "none") {
+		cfg.proxy = ""
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/chat/completions", auth(handleChatCompletions))
