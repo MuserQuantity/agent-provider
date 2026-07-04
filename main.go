@@ -38,6 +38,9 @@ func main() {
 	if strings.EqualFold(cfg.proxy, "none") {
 		cfg.proxy = ""
 	}
+	if err := os.MkdirAll(cfg.workdir, 0o755); err != nil {
+		log.Fatalf("cannot create workdir %q: %v", cfg.workdir, err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/chat/completions", auth(handleChatCompletions))

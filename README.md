@@ -122,6 +122,7 @@ devin -p "Reply with exactly one word: pong"
 AGENT_PROVIDER_ADDR=0.0.0.0:8080
 AGENT_PROVIDER_API_KEY=<强随机串>
 AGENT_PROVIDER_PROXY=none
+AGENT_PROVIDER_WORKDIR=/opt/agent-provider/scratch
 ```
 
 - 服务器不需要本机那个 7890 代理时**必须**写 `AGENT_PROVIDER_PROXY=none`（或启动时传 `-proxy ""`），否则默认会给 CLI 注入 `http://127.0.0.1:7890`，网络会全挂。
@@ -174,6 +175,18 @@ curl http://127.0.0.1:8080/v1/chat/completions \
 - `usage` 中的 token 数为估算值（约 4 字节/token），CLI 不回报真实用量。
 - 请求体兼容 UTF-8 BOM（Windows 客户端常见）。
 - 新增后端只需在 `backends.go` 的 `backends` 表里加一项。
+
+## 关于 session 堆积
+
+`devin -p` 每次调用都会持久化一个 session（无关闭开关，`/rm-session` 只在交互式 REPL 里可用），高频调用会堆出大量 session 记录：
+
+- **务必把 `AGENT_PROVIDER_WORKDIR` 指到一个专用目录**（服务启动时会自动创建）。devin 的 `devin ls` 按目录列 session，这样垃圾 session 不会混进你真实项目的会话列表。
+- 磁盘占用很小（每个 session 几 KB，存在 `~/.local/share/devin/cli/sessions.db`，Windows 为 `%APPDATA%\devin\cli\sessions.db`）。
+- 专用服务器上可以加个 cron 定期清空（会连同该机器上所有 devin 会话历史一起删，别在本机这么干）：
+
+```
+0 4 * * 0 pgrep -x devin >/dev/null || rm -f ~/.local/share/devin/cli/sessions.db*
+```
 
 ## License
 
