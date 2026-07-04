@@ -83,11 +83,18 @@ print(resp.choices[0].message.content)
 
 ### 1. 准备二进制
 
-方式 A（推荐）：本机交叉编译后上传，服务器无需装 Go：
+方式 A（推荐）：本机交叉编译后上传，服务器无需装 Go。先在服务器上建好目录（否则 scp 会 Permission denied）：
+
+```bash
+# 服务器上：
+sudo mkdir -p /opt/agent-provider && sudo chown $USER:$USER /opt/agent-provider
+```
 
 ```powershell
+# 本机：
 $env:GOOS='linux'; $env:GOARCH='amd64'; go build -o agent-provider-linux-amd64 .
 scp .\agent-provider-linux-amd64 ubuntu@服务器:/opt/agent-provider/agent-provider
+ssh ubuntu@服务器 "chmod +x /opt/agent-provider/agent-provider"
 ```
 
 方式 B：服务器上从源码构建（需要 Go 1.26+，apt 里的版本太旧，用 snap）：
@@ -144,8 +151,6 @@ WantedBy=multi-user.target
 注意：`User` 必须是执行过 `devin auth login` 的那个用户（凭据存在其 home 下），`PATH` 必须包含 devin 的安装目录（默认 `~/.local/bin`）。
 
 ```bash
-sudo mkdir -p /opt/agent-provider && sudo chown ubuntu:ubuntu /opt/agent-provider
-chmod +x /opt/agent-provider/agent-provider
 sudo systemctl daemon-reload
 sudo systemctl enable --now agent-provider
 journalctl -u agent-provider -f   # 看日志
