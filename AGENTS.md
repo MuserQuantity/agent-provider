@@ -28,6 +28,7 @@
 ## devin CLI 行为（实测结论，2026-07）
 
 - 非交互：`devin -p --prompt-file <f>`，`--model` 可透传；传无效模型名时报错会列出全部可用模型 ID（`swe-1.6-fast`、`swe-1.6`、`adaptive`、`claude-*`…）。
+- **不要给 `devin -p` 管道 stdin**：会 panic（repl_mode.rs unwrap None）；`grok -p` 也不读 stdin（报缺参数）。这俩只能走 `--prompt-file` 或内联参数，内联受 Windows 32K 命令行长度限制，所以统一用临时 prompt file（开销 <1ms，可忽略）。
 - 延迟：每次 `-p` 有约 5~6s 的固定会话开销（与模型无关）；`swe-1.6(-fast)` 端到端 6~9s，默认模型约 12s。
 - session 堆积：每次 `-p` 都会按 cwd 持久化一个 session（`%APPDATA%\devin\cli\sessions.db`，Linux `~/.local/share/devin/cli/sessions.db`），**没有关闭开关**；`/rm-session` 只在交互 REPL 有效，放进 `-p` 会被当成普通 prompt 反而再建一个 session。缓解：服务 workdir 指向专用 scratch 目录。
 - 无头登录（SSH 服务器）：`devin auth login --force-manual-token-flow`。
